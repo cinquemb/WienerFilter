@@ -6,7 +6,7 @@
 #include <functional>
 
 
-std::vector<double> cross_correlation(std::vector<double>& ts, std::vector<double>& ys, int& new_order, int& old_order){
+std::vector<double> cross_correlation_wiener(std::vector<double>& ts, int& new_order, int& old_order){
 	//see: http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html
 	std::vector<double> out_data;
 	int n_taps = ts.size();
@@ -19,8 +19,8 @@ std::vector<double> cross_correlation(std::vector<double>& ts, std::vector<doubl
 	for(int i = -n_taps; i< n_taps; ++i){
 		double ts_sum = 0.0;
 		for(int j=0; j< n_size; ++j){
-			if( ((j+i) < n_taps) && (j < ys.size()) && ((j+i) > -1) )
-				ts_sum += ts[j+i] * (ys[j]*1);
+			if( ((j+i) < n_taps) && (j < new_order) && ((j+i) > -1) )
+				ts_sum += ts[j+i];
 		}
 		out_data.push_back(ts_sum);
 	}
@@ -32,19 +32,18 @@ std::vector<double> cross_correlation(std::vector<double>& ts, std::vector<doubl
 std::vector<double> wiener_filter_1d(std::vector<double>& t_series, int& order){
 	//see def wiener: https://github.com/scipy/scipy/blob/master/scipy/signal/signaltools.py
 	int new_order = (2*order)+1;
-	std::vector<double> y_series(new_order,1);
 	std::vector<double> t_2_series, lmean, lvar, res;
 
 	for(auto it = t_series.begin(); it != t_series.end(); ++it)
 		t_2_series.push_back(std::pow(*it, 2));
 
 	//Estimate the local mean
-	std::vector<double> t_lmean = cross_correlation(t_series, y_series, new_order, order);
+	std::vector<double> t_lmean = cross_correlation_wiener(t_series, new_order, order);
 	for(auto it = t_lmean.begin(); it != t_lmean.end(); ++it)
 		lmean.push_back((*it)/(double)new_order);
 	
 	//Estimate the local variance
-	std::vector<double> t_lvar = cross_correlation(t_2_series, y_series, new_order, order);
+	std::vector<double> t_lvar = cross_correlation_wiener(t_2_series, new_order, order);
 	for(int i=0; i<t_lvar.size(); ++i)
 		lvar.push_back(((t_lvar[i])/(double)new_order) - (std::pow(lmean[i], 2)));
 
@@ -52,11 +51,10 @@ std::vector<double> wiener_filter_1d(std::vector<double>& t_series, int& order){
 	double est_n = (double)std::accumulate(lvar.begin(), lvar.end(), 0.0) / (double)lvar.size();
 
 	for(int i=0; i<t_series.size(); ++i){
-		double t_res = ((t_series[i] - lmean[i]) * (1- (est_n/ float(lvar[i])))) + lmean[i];
 		if (lvar[i] < est_n)
 			res.push_back(lmean[i]);
 		else
-			res.push_back(t_res);
+			res.push_back(((t_series[i] - lmean[i]) * (1- (est_n/ float(lvar[i])))) + lmean[i]);
 	}	
 	return res;
 }
