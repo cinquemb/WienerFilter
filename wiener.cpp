@@ -25,10 +25,7 @@ std::vector<double> cross_correlation(std::vector<double>& ts, std::vector<doubl
 		out_data.push_back(ts_sum);
 	}
 
-	std::vector<double> end_trunc(out_data.begin(), out_data.end()-old_order);
-	std::vector<double> r_end_trunc(end_trunc.rbegin(), end_trunc.rend());
-	std::vector<double> r_out(r_end_trunc.begin(), r_end_trunc.begin()+n_taps);
-	std::vector<double> out(r_out.rbegin(),r_out.rend());
+	std::vector<double> out(out_data.end()-old_order-n_taps, out_data.end()-old_order);
 	return out;
 }
 
