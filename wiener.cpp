@@ -33,10 +33,7 @@ std::vector<double> wiener_filter_1d(std::vector<double>& t_series, int& order){
 	//see def wiener: https://github.com/scipy/scipy/blob/master/scipy/signal/signaltools.py
 	int new_order = (2*order)+1;
 	std::vector<double> y_series(new_order,1);
-	std::vector<double> t_2_series;
-	std::vector<double> lmean;
-	std::vector<double> lvar;
-	std::vector<double> res;
+	std::vector<double> t_2_series, lmean, lvar, res;
 
 	for(auto it = t_series.begin(); it != t_series.end(); ++it)
 		t_2_series.push_back(std::pow(*it, 2));
@@ -66,7 +63,7 @@ std::vector<double> wiener_filter_1d(std::vector<double>& t_series, int& order){
 
 int main(int argc, char *argv[]){
 	std::vector<double> time_series = {112,31,42,54,432,245,23,34,567,8,468,623,232,743,121};
-	int order = 1;
+	int order = 2;
 	std::vector<double> wf1d = wiener_filter_1d(time_series, order);
 	std::cout.precision(12);
 	for (auto it = wf1d.begin(); it != wf1d.end(); ++it)
